@@ -3,3 +3,6 @@ pkg_resources
 importlib
 argparse
 pyfiglet
+warnings
+typing
+shutil
