@@ -30,7 +30,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def get_imports(path: str):
+def get_imports(path: str) -> list:
     """"Returns a list of import paths
 
     Args:
@@ -54,7 +54,7 @@ def get_imports(path: str):
                     imports.append((file_imports, root, file))
     return imports
 
-def get_versions(modules: list):
+def get_versions(modules: list) -> dict:
     """Get the version of all the modules
 
     Args:
@@ -72,11 +72,14 @@ def get_versions(modules: list):
             versions[module] = None
     return versions
 
-def build_requirement_file(modules: list):
+def build_requirement_file(modules: list) -> None:
     """Build a requirement.txt file with all the modules and their versions
 
     Args:
         modules (list): list of modules
+
+    Returns:
+        _type_: None
     """
     versions = get_versions(modules)
     modules_with_versions = [(module, version) for module, version in versions.items() if version]
@@ -112,11 +115,14 @@ def delete_module_not_found(modules: List[str]) -> List[str]:
     return modules
 
 
-def get_source_code(module: str):
+def get_source_code(module: str) -> None:
     """Get the source code of a module
 
     Args:
         module (str): module name
+
+    Returns:
+        _type_: None
     """
     if module in sys.builtin_module_names:
         print(f"{module} is a built-in module")
@@ -141,7 +147,15 @@ def get_source_code(module: str):
 
 
 
-def analyze_source_code(path: str):
+def analyze_source_code(path: str) -> None:
+    """Analyze the source code of the project
+
+    Args:
+        path (str): path of the project
+
+    Returns:
+        _type_: None
+    """
     suspect_imports = ['eval', 'exec', 'pickle', 'marshal', 'shelve', 'os.system', 'subprocess', 'socket', 'requests',
                    'urllib.request', 'urllib.parse', 'urllib.error', 'urllib.robotparser', 'http.client',
                    'ftplib', 'poplib', 'imaplib', 'nntplib', 'smtplib', 'smtpd', 'telnetlib', 'uuid', 'hashlib',
@@ -172,12 +186,9 @@ def analyze_source_code(path: str):
 
                         break
 
-
-
-
-
-
 def main():
+    """ Main
+    """
     # Clear the terminal
     os.system('cls' if os.name == 'nt' else 'clear')
     # Add a ascii-art view of the program
@@ -344,3 +355,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
