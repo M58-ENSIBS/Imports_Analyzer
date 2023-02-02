@@ -1,8 +1,8 @@
 inspect
 pkg_resources
 importlib
-argparse
-pyfiglet
+argparse==1.4.0
+pyfiglet==0.8.post1
 warnings
 typing
 shutil
