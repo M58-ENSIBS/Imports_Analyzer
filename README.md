@@ -68,17 +68,17 @@ pip3 install -r requirements.txt
 
 Before any actions :
 
-![Initial](https://imgur.com/82o69vv)
+![Initial](https://github.com/MarchandRobin/Import_ANAL_Project/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2001-02-13.png)
 
 
 We want to delete all suspicious imports :
 
-![Changements](https://imgur.com/JUD9Ugi)
+![Changements](https://github.com/MarchandRobin/Import_ANAL_Project/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2001-05-10.png)
 
 
 Finally : 
 
-![AfterAll](https://imgur.com/undefined)
+![AfterAll](https://github.com/MarchandRobin/Import_ANAL_Project/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2001-06-32.png)
 
 
 
