@@ -6,7 +6,9 @@ import importlib
 import argparse
 import pyfiglet
 import time
-
+import sys
+import warnings
+from typing import List, Tuple
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -21,7 +23,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def get_imports(path):
+def get_imports(path: str):
     """Return a list of all imported modules in a folder full of python files"""
     imports = []
     for folder, _, files in os.walk(path):
@@ -37,7 +39,7 @@ def get_imports(path):
     return imports
 
 
-def get_versions(modules):
+def get_versions(modules: list):
     """Return the version of each module"""
     versions = {}
     for module in modules:
@@ -48,18 +50,26 @@ def get_versions(modules):
             versions[module] = None
     return versions
 
-def build_requirement_file(modules):
+def build_requirement_file(modules: list):
     """Create a requirement.txt file with all the import found in the project"""
     versions = get_versions(modules)
+    modules_with_versions = [(module, version) for module, version in versions.items() if version]
+    modules_without_versions = [(module, version) for module, version in versions.items() if not version]
+    
+    sorted_modules_with_versions = sorted(modules_with_versions, key=lambda x: x[0])
+    sorted_modules_without_versions = sorted(modules_without_versions, key=lambda x: x[0])
+    
     with open('requirements.txt', 'w') as f:
-        for module, version in versions.items():
-            if version:
-                f.write(f"{module}=={version}\n")
+        for module, version in sorted_modules_with_versions:
+            f.write(f"{module}=={version}\n")
+        for module, version in sorted_modules_without_versions:
+            f.write(f"{module}\n")
+
 
 
 
 # Create a function which delete all module which are 'ModuleNotFoundError'
-def delete_module_not_found(modules):
+def delete_module_not_found(modules: List[str]) -> List[str]:
     """Delete all module which are 'ModuleNotFoundError'"""
     for module in modules:
         try:
@@ -69,14 +79,30 @@ def delete_module_not_found(modules):
     return modules
 
 
-def get_source_code(module):
+def get_source_code(module: str):
     """Write the source code of concerned module in folder named SourceCode and call source_import_xxxx.txt"""
+    if module in sys.builtin_module_names:
+        return
+    # Create a folder named SourceCode
+    if not os.path.exists('SourceCode'):
+        os.makedirs('SourceCode')
+    else:
+        pass
+    # Create source_import_xxxx.txt
+    if not os.path.exists(f"SourceCode/source_import_{module}.txt"):
+        pass
+    else:
+        os.remove(f"SourceCode/source_import_{module}.txt")
     with open(f"SourceCode/source_import_{module}.txt", 'w') as f:
         f.write(inspect.getsource(importlib.import_module(module)))
 
 
 
+
+
+
 def main():
+    warnings.filterwarnings("ignore", category=pkg_resources.PkgResourcesDeprecationWarning)    
     args = parse_arguments()
     path = os.path.dirname(os.path.abspath(__file__))
     result = get_imports(path)
@@ -126,7 +152,8 @@ def main():
     if args.ascii_art:
         ascii_banner = pyfiglet.figlet_format("Import Anal by M58-")
         print(ascii_banner)
-        time.sleep(2)
+        exit(0)
+        
 
 
 
