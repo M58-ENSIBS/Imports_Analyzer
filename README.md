@@ -61,24 +61,11 @@ pip3 install -r requirements.txt
 
 `s` => `Delete suspicious imports`
 
+`b` => `Print the banner of the program`
+
+`a` => `Analyze source codes of the project
 
 
-## Demo
-
-
-Before any actions :
-
-![Initial](https://github.com/MarchandRobin/Import_ANAL_Project/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2001-02-13.png)
-
-
-We want to delete all suspicious imports :
-
-![Changements](https://github.com/MarchandRobin/Import_ANAL_Project/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2001-05-10.png)
-
-
-Finally : 
-
-![AfterAll](https://github.com/MarchandRobin/Import_ANAL_Project/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2001-06-32.png)
 
 
 ## License
