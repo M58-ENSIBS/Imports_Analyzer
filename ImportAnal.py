@@ -9,8 +9,6 @@ __license__ = 'MIT'
 #~~~~~~~~~~~~~~~~
 
 
-
-
 import os
 import re  
 import inspect
@@ -35,7 +33,7 @@ def parse_arguments():
     parser.add_argument('-r', '--requirement', action='store_true',
                         help='Create a requirement.txt file with all the import found in the project')
     parser.add_argument('-b', '--ascii_art', action='store_true',
-                        help='Add a complete ascii-art view of the program')
+                        help='Print banner of the program')
     parser.add_argument('-s', '--delete_red_flag', action='store_true',
                         help='Delete all red flag import in files')
     parser.add_argument('-a', '--analyze_sources', action='store_true',
@@ -44,7 +42,7 @@ def parse_arguments():
 
 
 def get_imports(path: str) -> list:
-    """"Returns a list of import paths
+    """Returns a list of import paths
 
     Args:
         path: path of the project
@@ -110,7 +108,6 @@ def build_requirement_file(modules: list) -> None:
 
 
 
-# Create a function which delete all module which are 'ModuleNotFoundError'
 def delete_module_not_found(modules: List[str]) -> List[str]:
     """Delete all module which are 'ModuleNotFoundError'
 
@@ -160,6 +157,9 @@ def get_source_code(module: str) -> None:
 
 
 
+import os
+import re
+
 def analyze_source_code(path: str) -> None:
     """Analyze the source code of the project
 
@@ -170,10 +170,10 @@ def analyze_source_code(path: str) -> None:
         _type_: None
     """
     suspect_imports = ['eval', 'exec', 'pickle', 'marshal', 'shelve', 'os.system', 'subprocess', 'socket', 'requests',
-                   'urllib.request', 'urllib.parse', 'urllib.error', 'urllib.robotparser', 'http.client',
-                   'ftplib', 'poplib', 'imaplib', 'nntplib', 'smtplib', 'smtpd', 'telnetlib', 'uuid', 'hashlib',
-                   'hmac', 'secrets', 'ssl', 'py_compile', 'compileall', 'dis', 'pickletools', 'codecs', 'encodings',
-                   'zipimport', 'pkgutil', 'modulefinder', 'runpy', 'imp', 'importlib']
+                       'urllib.request', 'urllib.parse', 'urllib.error', 'urllib.robotparser', 'http.client',
+                       'ftplib', 'poplib', 'imaplib', 'nntplib', 'smtplib', 'smtpd', 'telnetlib', 'uuid', 'hashlib',
+                       'hmac', 'secrets', 'ssl', 'py_compile', 'compileall', 'dis', 'pickletools', 'codecs', 'encodings',
+                       'zipimport', 'pkgutil', 'modulefinder', 'runpy', 'imp', 'importlib']
     for root, dirs, files in os.walk(path):
         for file in files:
             with open(os.path.join(root, file), 'r') as f:
@@ -181,30 +181,34 @@ def analyze_source_code(path: str) -> None:
                 for suspect in suspect_imports:
                     if suspect in source_code:
                         print("================================"
-                                "================================")
-                        # print(f"Suspect import '{suspect}' found in file {file}!") in RED and BOLD
+                              "================================")
                         print("\033[1;31;40mSuspect import '{}' found in file {}!\033[0;37;40m".format(suspect, file))
                         print("================================"
-                                "================================")
-                        # Print the line where the suspect import is found
+                              "================================")
                         for line in source_code.splitlines():
-                            if suspect in line:
-                                print(f"Line: {line}")
-                                # Color in RED where the import is found in the lines
-                                print("\033[1;31;40m{}\033[0;37;40m".format(line.replace(suspect, f"\033[1;31;40m{suspect}\033[0;37;40m")))
+                            line_str = line.strip()
+                            start_index = line_str.find(suspect)
+                            while start_index != -1:
+                                end_index = start_index + len(suspect)
+                                if (start_index == 0 or not line_str[start_index - 1].isalpha()) and \
+                                   (end_index == len(line_str) or not line_str[end_index].isalpha()):
+                                    print(line_str.replace(suspect, "\033[1;31;40m{}\033[0;37;40m".format(suspect)))
+                                    break
+                                start_index = line_str.find(suspect, end_index)
                         print("================================"
-                                "================================")
-
+                              "================================")
                         print("\n")
-
                         break
+
+
+
+
+
 
 def main():
     """ Main
     """
-    # Clear the terminal
     os.system('cls' if os.name == 'nt' else 'clear')
-    # Add a ascii-art view of the program
     print(pyfiglet.figlet_format("Import_Anal_M58", font="slant", width=100))
     warnings.filterwarnings("ignore", category=pkg_resources.PkgResourcesDeprecationWarning)    
     args = parse_arguments()
@@ -239,7 +243,6 @@ def main():
         if os.path.exists("SourceCode"):
             shutil.rmtree("SourceCode")
         os.mkdir("SourceCode")
-        # Get the source code of the module which are not found ('ModuleNotFoundError') and those which don't have known versions
         versions = get_versions(modules)
         modules_with_versions = [(module, version) for module, version in versions.items() if version]
         modules_without_versions = [(module, version) for module, version in versions.items() if not version]
@@ -247,7 +250,6 @@ def main():
             if module in sys.builtin_module_names:
                 continue
             print("Found red flag import (" + module + ") in " + file)
-            # Check if the module is installed
             try:
                 importlib.import_module(module)
                 print("Check passed for module: " + module)
@@ -267,7 +269,6 @@ def main():
         if os.path.exists("SourceCode"):
             shutil.rmtree("SourceCode")
         os.mkdir("SourceCode")
-        # Get the source code of all the non-built-in modules
         for module in modules:
             if module in sys.builtin_module_names:
                 continue
@@ -337,7 +338,6 @@ def main():
     print("--------------------------------")
     print("\n")
 
-    # In bold 
     print("\033[1m As asked by your arguments, the program will now:\033[0m")
     if args.restriction_level == 1:
         print("     - Dump source code of red print imports")
@@ -354,7 +354,6 @@ def main():
     print("")
 
     if args.delete_red_flag:
-        # prints in green
         print("\033[32m[+] All red flag imports have been deleted\033[0m")
     if args.requirement:
         print("\033[32m[+] A requirement.txt file has been created\033[0m")
