@@ -81,4 +81,9 @@ Finally :
 ![AfterAll](https://github.com/MarchandRobin/Import_ANAL_Project/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2001-06-32.png)
 
 
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
+
+
 
