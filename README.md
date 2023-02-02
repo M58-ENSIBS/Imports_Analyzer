@@ -20,13 +20,13 @@ Imports_ANAL is a python tool that allows you to parse an entire project and sca
 ## Features
 
 
-The tool is still in its initial phase, it presents for the moment the following functionalities:
+# The tool is still in its initial phase, it presents for the moment the following functionalities:
 
-- Parsing of all imports
-- First basic sort
-- Creation of a requirements.txt file
-- Deleting
-
+- Syntactic analysis of all imports
+- Creating a requirements.txt file
+- Dump of the source code of each import present in the project
+- Deleting suspicious imports present in the project
+- Recognizing a suspicious piece of code
 
 
 
