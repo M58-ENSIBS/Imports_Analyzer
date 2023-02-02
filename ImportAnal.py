@@ -173,7 +173,14 @@ def analyze_source_code(path: str) -> None:
                        'urllib.request', 'urllib.parse', 'urllib.error', 'urllib.robotparser', 'http.client',
                        'ftplib', 'poplib', 'imaplib', 'nntplib', 'smtplib', 'smtpd', 'telnetlib', 'uuid', 'hashlib',
                        'hmac', 'secrets', 'ssl', 'py_compile', 'compileall', 'dis', 'pickletools', 'codecs', 'encodings',
-                       'zipimport', 'pkgutil', 'modulefinder', 'runpy', 'imp', 'importlib']
+                       'zipimport', 'pkgutil', 'modulefinder', 'runpy', 'imp', 'importlib', 'bash', 'sh', 'zsh', 'csh',
+                          'tcsh', 'pwsh', 'powershell', 'cmd', 'mshta', 'rundll32', 'regsvr32', 'regasm', 'wscript',
+                            'cscript', 'msbuild', 'msxsl', 'msdeploy', 'msdt', 'msiexec', 'mshta', 'msxsl', 'msdeploy',
+                            'msdt', 'msiexec', 'regsvr32', 'regasm', 'wscript', 'cscript', 'msbuild', 'msxsl', 'msdeploy'
+    ]
+
+    
+    
     for root, dirs, files in os.walk(path):
         for file in files:
             with open(os.path.join(root, file), 'r') as f:
@@ -192,9 +199,12 @@ def analyze_source_code(path: str) -> None:
                                 end_index = start_index + len(suspect)
                                 if (start_index == 0 or not line_str[start_index - 1].isalpha()) and \
                                    (end_index == len(line_str) or not line_str[end_index].isalpha()):
-                                    print(line_str.replace(suspect, "\033[1;31;40m{}\033[0;37;40m".format(suspect)))
+                                    print("\033[32mTrue Positives (Lines n°" + str(source_code.count('\n', 0, source_code.find(line_str))) + "): \033[0m" + line_str.replace(suspect, "\033[1;31;40m{}\033[0;37;40m".format(suspect)))
                                     break
+                                else:
+                                    print("False Positives: " + line_str)
                                 start_index = line_str.find(suspect, end_index)
+
                         print("================================"
                               "================================")
                         print("\n")
