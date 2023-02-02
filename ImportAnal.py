@@ -1,3 +1,16 @@
+__author__ = 'M58'
+__version__ = '1.0.0'
+__date__ = '02.02.2023'
+__license__ = 'MIT'
+
+
+#~~~~~~~~~~~~~~~~
+# Import Section
+#~~~~~~~~~~~~~~~~
+
+
+
+
 import os
 import re  
 import inspect
