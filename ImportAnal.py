@@ -62,8 +62,12 @@ def get_imports(path: str) -> list:
                         match = re.match(r'import\s(\w+)', line)
                         if match:
                             file_imports.append(match.group(1))
+                        match = re.match(r'from\s(\w+)\simport\s\*', line)
+                        if match:
+                            file_imports.append(match.group(1))
                     imports.append((file_imports, root, file))
     return imports
+
 
 def get_versions(modules: list) -> dict:
     """Get the version of all the modules
@@ -143,6 +147,7 @@ def get_source_code(module: str) -> None:
     try:
         with open(source_file, 'w') as f:
             f.write(inspect.getsource(importlib.import_module(module)))
+
     except OSError:
         print(f"Cannot write source code of {module} to {source_file}")
 
@@ -154,11 +159,6 @@ def get_source_code(module: str) -> None:
         with open(source_file, 'w') as f:
             f.write("Careful, the source code of this module is not available.")
 
-
-
-
-import os
-import re
 
 def analyze_source_code(path: str) -> None:
     """Analyze the source code of the project
@@ -179,36 +179,56 @@ def analyze_source_code(path: str) -> None:
                             'msdt', 'msiexec', 'regsvr32', 'regasm', 'wscript', 'cscript', 'msbuild', 'msxsl', 'msdeploy'
     ]
 
-    
-    
+    lines_less_100 = []
+
     for root, dirs, files in os.walk(path):
         for file in files:
             with open(os.path.join(root, file), 'r') as f:
                 source_code = f.read()
+                lines = source_code.splitlines()
+                if len(lines) < 100:
+                    lines_less_100.append(file)
                 for suspect in suspect_imports:
                     if suspect in source_code:
                         print("================================"
-                              "================================")
+                            "================================")
                         print("\033[1;31;40mSuspect import '{}' found in file {}!\033[0;37;40m".format(suspect, file))
                         print("================================"
-                              "================================")
+                            "================================")
                         for line in source_code.splitlines():
                             line_str = line.strip()
                             start_index = line_str.find(suspect)
                             while start_index != -1:
                                 end_index = start_index + len(suspect)
                                 if (start_index == 0 or not line_str[start_index - 1].isalpha()) and \
-                                   (end_index == len(line_str) or not line_str[end_index].isalpha()):
-                                    print("\033[32mTrue Positives (Lines n°" + str(source_code.count('\n', 0, source_code.find(line_str))) + "): \033[0m" + line_str.replace(suspect, "\033[1;31;40m{}\033[0;37;40m".format(suspect)))
-                                    break
+                                (end_index == len(line_str) or not line_str[end_index].isalpha()):
+                                    print("\033[32mTrue Positives (Lines n°" + str(source_code.count('\n', 0, source_code.find(line_str))) + "): \033[0;37;40m" + line_str.replace(suspect, "\033[1;31;40m{}\033[0;37;40m".format(suspect)))
                                 else:
                                     print("False Positives: " + line_str)
                                 start_index = line_str.find(suspect, end_index)
-
                         print("================================"
-                              "================================")
+                            "================================")
                         print("\n")
-                        break
+
+    if lines_less_100:
+        print("================================"
+            "================================")
+        print("\033[1;31;40mNOTA\033[0;37;40m")
+        print("================================"
+            "================================")
+        print("Some of the source files have less than 100 lines, it's possible it's a handmaded script.")
+        print('--------------------------------')
+        for file in lines_less_100:
+            print(file)
+            print("--------------------------------")
+        print("================================"
+            "================================")
+
+
+
+
+                    
+
 
 
 
