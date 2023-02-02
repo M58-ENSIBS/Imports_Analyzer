@@ -57,13 +57,28 @@ pip3 install -r requirements.txt
 
 `d` => `Level of restriction of the program [1,2,3]`
 
+![SUS](https://github.com/MarchandRobin/Imports_ANAL/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2021-31-53.png)
+
 `r` => `Create a requirements.txt file`
+
+
+![Req](https://github.com/MarchandRobin/Imports_ANAL/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2021-31-24.png)
 
 `s` => `Delete suspicious imports`
 
+
 `b` => `Print the banner of the program`
 
-`a` => `Analyze source codes of the project
+`a` => `Analyze source codes of the project`
+
+![Fold](https://github.com/MarchandRobin/Imports_ANAL/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2021-32-09.png)
+
+
+![DANGER](https://github.com/MarchandRobin/Imports_ANAL/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-02%2021-32-59.png)
+
+
+
+
 
 
 
