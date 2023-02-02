@@ -5,12 +5,17 @@ import pkg_resources
 import importlib
 import argparse
 import pyfiglet
-import time
 import sys
 import warnings
-from typing import List, Tuple
+from typing import List
+import shutil
 
 def parse_arguments():
+    """Parse the arguments of the program
+
+    Returns:
+        _type_: argparse.Namespace
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--restriction_level', type=int, choices=[1, 2, 3], 
                         help='Level of restriction of the program: 1=> Dump source code of red print imports, 2 => orange and red prints imports, 3 => all imports')
@@ -24,23 +29,38 @@ def parse_arguments():
 
 
 def get_imports(path: str):
-    """Return a list of all imported modules in a folder full of python files"""
+    """"Returns a list of import paths
+
+    Args:
+        path: path of the project
+
+    Returns:
+        _type_: list
+    """
+
     imports = []
-    for folder, _, files in os.walk(path):
+    for root, dirs, files in os.walk(path):
         for file in files:
             if file.endswith(".py"):
-                with open(os.path.join(folder, file), 'r') as f:
+                file_path = os.path.join(root, file)
+                with open(file_path, 'r') as f:
                     file_imports = []
                     for line in f:
                         match = re.match(r'import\s(\w+)', line)
                         if match:
                             file_imports.append(match.group(1))
-                    imports.append((file_imports, folder, file))
+                    imports.append((file_imports, root, file))
     return imports
 
-
 def get_versions(modules: list):
-    """Return the version of each module"""
+    """Get the version of all the modules
+
+    Args:
+        modules (list): list of modules
+
+    Returns:
+        _type_: dict
+    """
     versions = {}
     for module in modules:
         try:
@@ -51,7 +71,11 @@ def get_versions(modules: list):
     return versions
 
 def build_requirement_file(modules: list):
-    """Create a requirement.txt file with all the import found in the project"""
+    """Build a requirement.txt file with all the modules and their versions
+
+    Args:
+        modules (list): list of modules
+    """
     versions = get_versions(modules)
     modules_with_versions = [(module, version) for module, version in versions.items() if version]
     modules_without_versions = [(module, version) for module, version in versions.items() if not version]
@@ -70,7 +94,14 @@ def build_requirement_file(modules: list):
 
 # Create a function which delete all module which are 'ModuleNotFoundError'
 def delete_module_not_found(modules: List[str]) -> List[str]:
-    """Delete all module which are 'ModuleNotFoundError'"""
+    """Delete all module which are 'ModuleNotFoundError'
+
+    Args:
+        modules (List[str]): list of modules
+
+    Returns:
+        List[str]: list of modules
+    """
     for module in modules:
         try:
             importlib.import_module(module)
@@ -80,56 +111,104 @@ def delete_module_not_found(modules: List[str]) -> List[str]:
 
 
 def get_source_code(module: str):
-    """Write the source code of concerned module in folder named SourceCode and call source_import_xxxx.txt"""
-    if module in sys.builtin_module_names:
-        return
-    # Create a folder named SourceCode
-    if not os.path.exists('SourceCode'):
-        os.makedirs('SourceCode')
-    else:
-        pass
-    # Create source_import_xxxx.txt
-    if not os.path.exists(f"SourceCode/source_import_{module}.txt"):
-        pass
-    else:
-        os.remove(f"SourceCode/source_import_{module}.txt")
-    with open(f"SourceCode/source_import_{module}.txt", 'w') as f:
-        f.write(inspect.getsource(importlib.import_module(module)))
+    """Get the source code of a module
 
+    Args:
+        module (str): module name
+    """
+    if module in sys.builtin_module_names:
+        print(f"{module} is a built-in module")
+        return
+
+    os.makedirs("SourceCode", exist_ok=True)
+    source_file = f"SourceCode/source_import_{module}.txt"
+    try:
+        with open(source_file, 'w') as f:
+            f.write(inspect.getsource(importlib.import_module(module)))
+    except OSError:
+        print(f"Cannot write source code of {module} to {source_file}")
+
+    except TypeError:
+        print("\n")
+        print("=====================================================")
+        print(f"/!\ Cannot get source code of {module}")
+        print("=====================================================")
+        with open(source_file, 'w') as f:
+            f.write("Careful, the source code of this module is not available.")
 
 
 
 
 
 def main():
+    # Clear the terminal
+    os.system('cls' if os.name == 'nt' else 'clear')
+    # Add a ascii-art view of the program
+    print(pyfiglet.figlet_format("Import_Anal_M58", font="slant", width=100))
     warnings.filterwarnings("ignore", category=pkg_resources.PkgResourcesDeprecationWarning)    
     args = parse_arguments()
-    path = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.dirname(os.path.abspath(__file__)) 
     result = get_imports(path)
     modules = []
     for file_imports, folder, file in result:
         for module in file_imports:
             modules.append(module)
     modules = delete_module_not_found(modules)
+    print("Deleting SoureCode folder ...")
+    if os.path.exists("SourceCode"):
+        shutil.rmtree("SourceCode")
+    os.mkdir("SourceCode")
     if args.requirement:
         build_requirement_file(modules)
+
     if args.restriction_level == 1:
+        print("\n")
+        print("=====================================================")
+        print(f"\033[33m\033[1mThe module {module} has beed dodged because it doesn't exist\033[0m")
+        print("=====================================================")
         for module in modules:
             try:
                 importlib.import_module(module)
             except ModuleNotFoundError:
                 get_source_code(module)
-    elif args.restriction_level == 2:
-        for module in modules:
+                
+
+    if args.restriction_level == 2:
+        # Get the source code of the module which are not found ('ModuleNotFoundError') and those which don't have known versions
+        versions = get_versions(modules)
+        modules_with_versions = [(module, version) for module, version in versions.items() if version]
+        modules_without_versions = [(module, version) for module, version in versions.items() if not version]
+        for module, version in modules_without_versions:
+            if module in sys.builtin_module_names:
+                continue
+            print("Found red flag import (" + module + ") in " + file)
+            # Check if the module is installed
             try:
                 importlib.import_module(module)
+                print("Check passed for module: " + module)
             except ModuleNotFoundError:
-                get_source_code(module)
-            except:
-                get_source_code(module)
-    elif args.restriction_level == 3:
+                print("Module not installed: " + module)
+            if module in modules_with_versions:
+                continue
+            else:
+                if module in sys.builtin_module_names:
+                    continue
+                else:
+                    get_source_code(module)
+                    print("Check passed for module: " + module)
+
+    if args.restriction_level == 3:
+        # Get the source code of all the non-built-in modules
         for module in modules:
-            get_source_code(module)
+            if module in sys.builtin_module_names:
+                continue
+            else:
+                get_source_code(module)
+
+
+
+
+
     if args.delete_red_flag:
         for file_imports, folder, file in result:
             for module in file_imports:
@@ -150,7 +229,7 @@ def main():
                             if f"import {module}" not in line:
                                 f.write(line)
     if args.ascii_art:
-        ascii_banner = pyfiglet.figlet_format("Import Anal by M58-")
+        ascii_banner = pyfiglet.figlet_format("Import Anal by M58")
         print(ascii_banner)
         exit(0)
         
