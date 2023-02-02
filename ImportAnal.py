@@ -54,7 +54,7 @@ def build_requirement_file(modules):
     with open('requirements.txt', 'w') as f:
         for module, version in versions.items():
             if version:
-                f.write(f"{module}=={version}")
+                f.write(f"{module}=={version}\n")
 
 
 
@@ -138,6 +138,8 @@ def main():
             print("|--" + file)
         else:
             print("|--" + file)
+        if not file_imports:
+            print("|   |-- \033[32mNo imports found in this file\033[0m")
         for module in file_imports:
             try:
                 module_version = importlib.import_module(module).__version__
@@ -148,6 +150,38 @@ def main():
                 print(f"|   |-- Import {module} \033[33m(No version information available)\033[0m")
         prev_root = folder
         
+
+    print("--------------------------------")
+    print("\n")
+
+    # In bold 
+    print("\033[1m As asked by your arguments, the program will now:\033[0m")
+    if args.restriction_level == 1:
+        print("     - Dump source code of red print imports")
+    elif args.restriction_level == 2:
+        print("     - Dump source code of orange and red print imports")
+    elif args.restriction_level == 3:
+        print("     - Dump source code of all imports")
+    if args.requirement:
+        print("     - Create a requirement.txt file with all the import found in the project")
+    if args.delete_red_flag:
+        print("     - Delete all red flag import in files")
+    if args.ascii_art:
+        print("     - Add a complete ascii-art view of the program")
+    print("")
+
+    if args.delete_red_flag:
+        # prints in green
+        print("\033[32m[+] All red flag imports have been deleted\033[0m")
+    if args.requirement:
+        print("\033[32m[+] A requirement.txt file has been created\033[0m")
+    if args.restriction_level == 1 or args.restriction_level == 2 or args.restriction_level == 3:
+        print("\033[32m[+] All source code has been dumped in folder named SourceCode\033[0m")
+
+
+
+
+
 
 if __name__ == "__main__":
     main()
