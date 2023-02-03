@@ -198,13 +198,19 @@ def analyze_source_code(path: str) -> None:
         outfile.write("<ul>")
         for root, dirs, files in os.walk(path):
             for file in files:
+                # Print every file present in the report, print only the name of the file (not source_import_xxx.txt)
+                # Regex to keep only the name of the file
                 if re.search(r"source_import_(.*).txt", file):
                     file = file.replace("source_import_", "")
                     file = file.replace(".txt", "")
                 outfile.write(f"<li>{file}</li>")
-        outfile.write("</ul>")
+                # Create anchor to full end of the report
 
+        outfile.write("</ul>")
+        outfile.write(f"<a href='#end' style='color: inherit;'>↳ End of the report</a>")
         outfile.write("</div>")
+
+
         outfile.write("<table>")
         outfile.write("<thead>")
         outfile.write("<tr>")
@@ -269,7 +275,41 @@ def analyze_source_code(path: str) -> None:
                 outfile.write("</ul>\n")
                 outfile.write("</div>\n")
 
+            number_of_unique_suspect_imports = len(suspect_imports)
+
+
+            number_files = 0
+            for root, dirs, files in os.walk(path):
+                for file in files:
+                    number_files += 1
+
+            number_true_positives = 0
+            for root, dirs, files in os.walk(path):
+                for file in files:
+                    with open(os.path.join(root, file), 'r') as f:
+                        source_code = f.read()
+                        for suspect in suspect_imports:
+                            if suspect in source_code:
+                                for line in source_code.splitlines():
+                                    line_str = line.strip()
+                                    start_index = line_str.find(suspect)
+                                    while start_index != -1:
+                                        end_index = start_index + len(suspect)
+                                        if (start_index == 0 or not line_str[start_index - 1].isalpha()) and \
+                                        (end_index == len(line_str) or not line_str[end_index].isalpha()):
+                                            number_true_positives += 1
+                                        start_index = line_str.find(suspect, end_index)
+
+            outfile.write("<div>\n")
+            outfile.write("<h3>Recap of the analysis</h3>\n")
+            outfile.write("<p> The scanned folder has {} files and {} true positives.</p>\n".format(number_files, number_true_positives))
+
+
+
+            
+
             outfile.write("</body>\n")
+            outfile.write("<div id='end'>\n")
             outfile.write("</html>\n")
 
             print("Report generated in report.html")
