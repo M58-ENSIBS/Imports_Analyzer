@@ -178,51 +178,101 @@ def analyze_source_code(path: str) -> None:
                             'cscript', 'msbuild', 'msxsl', 'msdeploy', 'msdt', 'msiexec', 'mshta', 'msxsl', 'msdeploy',
                             'msdt', 'msiexec', 'regsvr32', 'regasm', 'wscript', 'cscript', 'msbuild', 'msxsl', 'msdeploy'
     ]
-
     lines_less_100 = []
 
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            with open(os.path.join(root, file), 'r') as f:
-                source_code = f.read()
-                lines = source_code.splitlines()
-                if len(lines) < 100:
-                    lines_less_100.append(file)
-                for suspect in suspect_imports:
-                    if suspect in source_code:
-                        print("================================"
-                            "================================")
-                        print("\033[1;31;40mSuspect import '{}' found in file {}!\033[0;37;40m".format(suspect, file))
-                        print("================================"
-                            "================================")
-                        for line in source_code.splitlines():
-                            line_str = line.strip()
-                            start_index = line_str.find(suspect)
-                            while start_index != -1:
-                                end_index = start_index + len(suspect)
-                                if (start_index == 0 or not line_str[start_index - 1].isalpha()) and \
-                                (end_index == len(line_str) or not line_str[end_index].isalpha()):
-                                    print("\033[32mTrue Positives (Lines n°" + str(source_code.count('\n', 0, source_code.find(line_str))) + "): \033[0;37;40m" + line_str.replace(suspect, "\033[1;31;40m{}\033[0;37;40m".format(suspect)))
-                                else:
-                                    print("False Positives: " + line_str)
-                                start_index = line_str.find(suspect, end_index)
-                        print("================================"
-                            "================================")
-                        print("\n")
+    with open("report.html", "w") as outfile:
+        outfile.write("<html>")
+        outfile.write("<head>")
+        outfile.write("<title>Report ANAL</title>")
+        outfile.write("<style>")
+        outfile.write("table, th, td {")
+        outfile.write("border: 1px solid black;")
+        outfile.write("border-collapse: collapse;")
+        outfile.write("}")
+        outfile.write("</style>")
+        outfile.write("</head>")
+        outfile.write("<body>")
+        outfile.write("<h1>Detection Report</h1>")
+        outfile.write("<div>")
+        outfile.write("<h2>Summary</h2>")
+        outfile.write("<ul>")
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                if re.search(r"source_import_(.*).txt", file):
+                    file = file.replace("source_import_", "")
+                    file = file.replace(".txt", "")
+                outfile.write(f"<li>{file}</li>")
+        outfile.write("</ul>")
 
-    if lines_less_100:
-        print("================================"
-            "================================")
-        print("\033[1;31;40mNOTA\033[0;37;40m")
-        print("================================"
-            "================================")
-        print("Some of the source files have less than 100 lines, it's possible it's a handmaded script.")
-        print('--------------------------------')
-        for file in lines_less_100:
-            print(file)
-            print("--------------------------------")
-        print("================================"
-            "================================")
+        outfile.write("</div>")
+        outfile.write("<table>")
+        outfile.write("<thead>")
+        outfile.write("<tr>")
+        outfile.write("<th>File Name</th>")
+        outfile.write("<th>Suspect Import</th>")
+        outfile.write("<th>Type</th>")
+        outfile.write("<th>Line Number</th>")
+        outfile.write("<th>Line Content</th>")
+        outfile.write("</tr>")
+        outfile.write("</thead>")
+        outfile.write("<tbody>")
+
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                with open(os.path.join(root, file), 'r') as f:
+                    source_code = f.read()
+                    lines = source_code.splitlines()
+                    if len(lines) < 100:
+                        lines_less_100.append(file)
+                    for suspect in suspect_imports:
+                        if suspect in source_code:
+                            outfile.write("<tr>")
+                            outfile.write("<td><a href='{}'>{}</a></td>".format(os.path.join(root, file), file))
+                            outfile.write("<td>{}</td>".format(suspect))
+                            outfile.write("<td colspan='3' style='background-color: yellow;'>Found suspect import</td>")
+                            outfile.write("</tr>")
+
+                            for line in source_code.splitlines():
+                                line_str = line.strip()
+                                start_index = line_str.find(suspect)
+                                while start_index != -1:
+                                    end_index = start_index + len(suspect)
+                                    if (start_index == 0 or not line_str[start_index - 1].isalpha()) and \
+                                    (end_index == len(line_str) or not line_str[end_index].isalpha()):
+                                        outfile.write("<tr>")
+                                        outfile.write("<td></td>")
+                                        outfile.write("<td></td>")
+                                        outfile.write("<td style='color: green;'>True Positive</td>")
+                                        outfile.write("<td>{}</td>".format(source_code.count('\n', 0, source_code.find(line_str))))
+                                        outfile.write("<td>{}</td>".format(line_str.replace(suspect, "<span style='color: red;'>{}</span>".format(suspect))))
+                                        outfile.write("</tr>")
+                                    else:
+                                        outfile.write("<tr>")
+                                        outfile.write("<td></td>")
+                                        outfile.write("<td></td>")
+                                        outfile.write("<td style='color: red;'>False Positive</td>")
+                                        outfile.write("<td>{}</td>".format(source_code.count('\n', 0, source_code.find(line_str))))
+                                        outfile.write("<td>{}</td>".format(line_str.replace(suspect, "<span style='color: red;'>{}</span>".format(suspect))))
+                                        outfile.write("</tr>")
+                                    start_index = line_str.find(suspect, end_index)
+                                    
+            outfile.write("</tbody>\n")
+            outfile.write("</table>\n")
+
+            if lines_less_100:
+                outfile.write("<div>\n")
+                outfile.write("<h3 style='color: red;'>NOTA</h3>\n")
+                outfile.write("<p>Some of the source files have less than 100 lines, it's possible it's a hand-made script.</p>\n")
+                outfile.write("<ul>\n")
+                for file in lines_less_100:
+                    outfile.write("<li>{}</li>\n".format(file))
+                outfile.write("</ul>\n")
+                outfile.write("</div>\n")
+
+            outfile.write("</body>\n")
+            outfile.write("</html>\n")
+
+            print("Report generated in report.html")
 
 
 
