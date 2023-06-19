@@ -20,6 +20,8 @@ import sys
 import warnings
 from typing import List
 import shutil
+from colorama import Fore, Style
+import requests
 
 def parse_arguments():
     """Parse the arguments of the program
@@ -38,11 +40,54 @@ def parse_arguments():
                         help='Delete all red flag import in files')
     parser.add_argument('-a', '--analyze_sources', action='store_true',
                         help='Analyze the source code of the project')
+    parser.add_argument('-p', '--request_pypi', action='store_true',
+                        help='Search the import on pypi')
+                        
     return parser.parse_args()
 
 
+def request_pypi(modules: list) -> None:
+    """Search the import on pypi
+
+    Args:
+        modules (list): list of modules
+
+    Returns:
+        _type_: None
+    """
+    not_found_modules = []
+    nativ_modules_python = []
+    # Add every nativ module present by nature
+    for module in sys.builtin_module_names:
+        nativ_modules_python.append(module)
+
+    
+    print("Checking on both get_distribution and pypi...")
+    for module in modules:
+        try:
+            package = pkg_resources.get_distribution(module)
+        except pkg_resources.DistributionNotFound:
+            not_found_modules.append(module)        
+
+    for module in not_found_modules:
+        try:
+            url = "https://pypi.org/project/{module}/".format(module=module)
+            r = requests.get(url)
+            if r.status_code == 200:
+                pass
+            else:
+                if module in nativ_modules_python:
+                    print(f"\033[32m{module.ljust(30)} is a nativ module")
+                    # Remove this import from the list
+                    modules.remove(module)
+                else:
+                    print(f"\033[31m{module.ljust(30)} is not found on both get_distribution and pypi.org")
+        except:
+            print(f"\033[31mERROR: {module.ljust(30)}")
+
+
 def get_imports(path: str) -> list:
-    """Returns a list of import paths
+    """Returns a list of import paths   
 
     Args:
         path: path of the project
@@ -209,8 +254,6 @@ def analyze_source_code(path: str) -> None:
         outfile.write("</ul>")
         outfile.write(f"<a href='#end' style='color: inherit;'>↳ End of the report</a>")
         outfile.write("</div>")
-
-
         outfile.write("<table>")
         outfile.write("<thead>")
         outfile.write("<tr>")
@@ -277,7 +320,6 @@ def analyze_source_code(path: str) -> None:
 
             number_of_unique_suspect_imports = len(suspect_imports)
 
-
             number_files = 0
             for root, dirs, files in os.walk(path):
                 for file in files:
@@ -303,27 +345,11 @@ def analyze_source_code(path: str) -> None:
             outfile.write("<div>\n")
             outfile.write("<h3>Recap of the analysis</h3>\n")
             outfile.write("<p> The scanned folder has {} files and {} true positives.</p>\n".format(number_files, number_true_positives))
-
-
-
-            
-
             outfile.write("</body>\n")
             outfile.write("<div id='end'>\n")
             outfile.write("</html>\n")
 
             print("Report generated in report.html")
-
-
-
-
-                    
-
-
-
-
-
-
 
 def main():
     """ Main
@@ -341,7 +367,7 @@ def main():
     modules = delete_module_not_found(modules)
     if args.requirement:
         build_requirement_file(modules)
-
+    
     if args.restriction_level == 1:
         print("Deleting SourceCode folder ...")
         if os.path.exists("SourceCode"):
@@ -357,7 +383,6 @@ def main():
             except ModuleNotFoundError:
                 get_source_code(module)
                 
-
     if args.restriction_level == 2:
         print("Deleting SourceCode folder ...")
         if os.path.exists("SourceCode"):
@@ -395,10 +420,6 @@ def main():
             else:
                 get_source_code(module)
 
-
-
-
-
     if args.delete_red_flag:
         print("Deleting SourceCode folder ...")
         if os.path.exists("SourceCode"):
@@ -431,9 +452,9 @@ def main():
         analyze_source_code("SourceCode")
         exit(0)
         
-
-
-
+    if args.request_pypi:
+        request_pypi(modules)
+        exit(0)
 
     prev_root = ''
     for file_imports, folder, file in result:
@@ -454,7 +475,6 @@ def main():
                 print(f"|   |-- Import {module} \033[33m(No version information available)\033[0m")
         prev_root = folder
         
-
     print("--------------------------------")
     print("\n")
 
@@ -471,6 +491,8 @@ def main():
         print("     - Delete all red flag import in files")
     if args.ascii_art:
         print("     - Add a complete ascii-art view of the program")
+    if args.request_pypi:
+        print("     - Request the pypi.org to get all the information about the modules")
     print("")
 
     if args.delete_red_flag:
@@ -480,14 +502,5 @@ def main():
     if args.restriction_level == 1 or args.restriction_level == 2 or args.restriction_level == 3:
         print("\033[32m[+] All source code has been dumped in folder named SourceCode\033[0m")
 
-
-
-
-
-
 if __name__ == "__main__":
     main()
-
-
-
-
