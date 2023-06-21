@@ -80,7 +80,9 @@ pip3 install -r requirements.txt
 ![REPORT](https://github.com/MarchandRobin/Imports_ANAL/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-02-03%2012-03-59.png)
 
 
+`g` => `Show a graphical relationship between folders`
 
+![GRAPH](https://github.com/MarchandRobin/Imports_Analyzer/blob/main/img/Capture%20d%E2%80%99%C3%A9cran%20du%202023-06-21%2010-05-45.png)
 
 
 
