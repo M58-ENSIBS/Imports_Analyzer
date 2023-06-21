@@ -22,6 +22,8 @@ from typing import List
 import shutil
 from colorama import Fore, Style
 import requests
+import networkx as nx
+import matplotlib.pyplot as plt
 
 def parse_arguments():
     """Parse the arguments of the program
@@ -42,6 +44,11 @@ def parse_arguments():
                         help='Analyze the source code of the project')
     parser.add_argument('-p', '--request_pypi', action='store_true',
                         help='Search the import on pypi')
+    parser.add_argument('-g', '--graph', action='store_true',
+                        help='Generate a graph of the project')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s {version}'.format(version=__version__),
+                        help='Print the version of the program')
+    
                         
     return parser.parse_args()
 
@@ -452,6 +459,120 @@ def main():
         analyze_source_code("SourceCode")
         exit(0)
         
+
+    if args.graph:
+        G = nx.Graph()
+
+        def generate_arborescence(current_folder):
+            """function to generate the arborescence of the folder
+
+            Args:
+                current_folder (str): the current folder
+            """
+            list_files_folders = os.listdir(current_folder)
+
+            for file_folder in list_files_folders:
+                full_path = os.path.join(current_folder, file_folder)
+
+                if os.path.isfile(full_path):
+                    G.add_node(full_path)
+                    G.add_edge(current_folder, full_path)
+                else:
+                    G.add_node(full_path, is_folder=True)
+                    G.add_edge(current_folder, full_path)
+
+                    generate_arborescence(full_path)
+
+            
+            for node in G.nodes():
+                node_name = os.path.basename(node)
+                for other_node in G.nodes():
+                    other_node_name = os.path.basename(other_node)
+                    if node_name == other_node_name and node != other_node:
+                        G.add_edge(node, other_node)
+
+
+        current_folder = "."
+        generate_arborescence(current_folder)
+
+
+        pos = nx.spring_layout(G)
+
+
+        fig, ax = plt.subplots()
+
+
+        node_colors = []
+        for node in G.nodes:
+            if node == current_folder:
+                node_colors.append("lightyellow")
+            elif G.nodes[node].get("is_folder"):
+                node_colors.append("lightgreen")
+            else:
+                node_colors.append("lightblue")
+
+
+        node_labels = {node: os.path.basename(node) for node in G.nodes}
+
+        nx.draw(G, pos, with_labels=True, labels=node_labels, node_color=node_colors, node_size=500)
+
+
+        dragging = False
+        node_to_drag = None
+        offset_x = 0.0
+        offset_y = 0.0
+
+
+        def on_press(event):
+            """Function called when a mouse button is pressed.
+
+            Args:
+                event (matplotlib.backend_bases.MouseEvent): The event.
+            """
+            global dragging, node_to_drag, offset_x, offset_y
+
+            if event.inaxes is not None:
+                x, y = event.xdata, event.ydata
+                for node, (pos_x, pos_y) in pos.items():
+                    if (x - pos_x) ** 2 + (y - pos_y) ** 2 < 0.03:
+                        dragging = True
+                        node_to_drag = node
+                        offset_x = pos_x - x
+                        offset_y = pos_y - y
+                        break
+
+
+        def on_motion(event):
+            """Function called when a mouse button is pressed and the mouse is moved.
+
+            Args:
+                event (matplotlib.backend_bases.MouseEvent): The event.
+            """
+            global dragging, node_to_drag
+
+            if dragging and event.inaxes is not None:
+                pos[node_to_drag] = (event.xdata + offset_x, event.ydata + offset_y)
+                plt.cla()
+                nx.draw(G, pos, with_labels=True, labels=node_labels, node_color=node_colors, node_size=500)
+                plt.draw()
+
+
+        def on_release(event):
+            global dragging, node_to_drag
+
+            if dragging:
+                dragging = False
+                node_to_drag = None
+
+
+        fig.canvas.mpl_connect('button_press_event', on_press)
+        fig.canvas.mpl_connect('motion_notify_event', on_motion)
+        fig.canvas.mpl_connect('button_release_event', on_release)
+
+
+        plt.show()
+
+
     if args.request_pypi:
         request_pypi(modules)
         exit(0)
